@@ -1,30 +1,29 @@
-/* Layout: top bar (name + menu); left profile column (small round portrait, name, links); right content column.
-   Dark by default on purpose; the Theme button switches to a light version. */
+/* Layout: top bar (name + menu); left profile column (small round portrait, name, links); right content column. */
 :root {
-  --bg: #0F141B;
-  --surface: #161D27;
-  --fg: #E7EBF0;
-  --muted: #98A5B3;
-  --line: #28323F;
-  --accent: #8DB4E8;
-  --accent-soft: #1C2A3C;
-  --on-accent: #0F141B;
-  --t-paper: #56B4E9;
-  --t-talk: #E69F00;
-  --t-milestone: #2DC49A;
-  --t-teaching: #F0E442;
-  --t-award: #CC79A7;
-  --t-travel: #F0793C;
-  --t-other: #9AA6B1;
+  --bg: #1B2820;
+  --surface: #24332A;
+  --fg: #F0F4EF;
+  --muted: #B4C1B7;
+  --line: #3B5142;
+  --accent: #98C99A;
+  --accent-soft: #304837;
+  --on-accent: #142019;
+  --t-paper: #8BC4AA;
+  --t-talk: #D0B56D;
+  --t-milestone: #79C18B;
+  --t-teaching: #BCD878;
+  --t-award: #D4A3BE;
+  --t-travel: #D99C68;
+  --t-other: #B7C3BA;
   --f-text: "EB Garamond", Garamond, "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   color-scheme: dark;
 }
 :root[data-theme="light"] {
-  --bg: #F4F6F8; --surface: #FFFFFF; --fg: #121C26; --muted: #566472; --line: #D5DCE3;
-  --accent: #1D4F91; --accent-soft: #E3ECF7; --on-accent: #FFFFFF;
-  --t-paper: #0072B2; --t-talk: #B36B00; --t-milestone: #007A5A; --t-teaching: #7F7400;
-  --t-award: #A8559A; --t-travel: #B34A00; --t-other: #5C6770;
+  --bg: #F3F7F0; --surface: #FFFFFF; --fg: #1A2A20; --muted: #5D7062; --line: #D3DED4;
+  --accent: #2E7650; --accent-soft: #E2EFE4; --on-accent: #FFFFFF;
+  --t-paper: #397C62; --t-talk: #9A741A; --t-milestone: #287247; --t-teaching: #687D19;
+  --t-award: #9F4F7D; --t-travel: #A65B28; --t-other: #607168;
   color-scheme: light;
 }
 

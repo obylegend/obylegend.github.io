@@ -27,7 +27,7 @@
   var TYPES = { paper: "Paper", talk: "Talk", milestone: "Milestone", teaching: "Teaching", award: "Award", travel: "Travel", other: "Other" };
   var PUB_TYPES = { journal: "Journal", conference: "Conference", preprint: "Preprint", working: "Working paper", review: "Under review", thesis: "Thesis", other: "Other" };
 
-  var titles = { home: "", cv: "CV · ", publications: "Publications · ", calendar: "Calendar · " };
+  var titles = { home: "", cv: "CV · ", publications: "Publications · ", calendar: "Calendar · ", teaching: "Teaching · " };
   document.title = (titles[page] || "") + P.name;
   var brand = document.getElementById("brand");
   if (brand) brand.textContent = P.name;
@@ -138,7 +138,6 @@
 
   /* ---------- publications ---------- */
   var pubFilter = "all";
-  var cites = {};
   function isMe(a) { return (P.authorAliases || [P.name]).indexOf(a) !== -1; }
   function pubsInner() {
     var pubs = (S.publications || []).slice().sort(function (a, b) { return idx(b.date) - idx(a.date); });
@@ -158,14 +157,13 @@
       return '<div class="pubyear"><h3>' + y + "</h3>" + byYear[y].map(function (p) {
         var key = "p" + pubs.indexOf(p);
         var authors = (p.authors || []).map(function (a) { return isMe(a) ? "<b>" + esc(a) + "</b>" : esc(a); }).join(", ");
-        cites[key] = (p.authors || []).join(", ") + ". " + p.title + ". " + p.venue + ", " + parseYM(p.date).y + ".";
         var links = [["PDF", p.pdf], ["DOI", p.doi ? "https://doi.org/" + p.doi : ""], ["Code", p.code], ["Link", p.url]].map(function (l) {
           var u = safeUrl(l[1]);
           return u ? '<a class="btn" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + l[0] + "</a>" : "";
         }).join("");
         return '<article class="pub"><h4>' + esc(p.title) + '</h4><p class="authors">' + authors + '</p><p class="venue"><em>' + esc(p.venue) + "</em>" +
           (p.status ? " · " + esc(p.status) : "") + '<span class="tag">' + esc(PUB_TYPES[p.type] || "Other") + "</span></p>" +
-          '<div class="pub-actions">' + links + '<button class="btn" type="button" data-cite="' + key + '">Copy citation</button></div>' +
+          (links ? '<div class="pub-actions">' + links + '</div>' : '') +
           (p.abstract ? "<details><summary>Abstract</summary><p>" + esc(p.abstract) + "</p></details>" : "") + "</article>";
       }).join("") + "</div>";
     }).join("");
@@ -218,7 +216,7 @@
     var events = allEvents();
     var list = visibleYears(start, years);              // newest first
     if (!list.length) return progressCard(start, years) + '<p class="empty">No years to show yet.</p>';
-    if (calSel === null || list.indexOf(calSel) === -1) calSel = clamp(Math.floor((nowIdx - start) / 12) + 1, 1, years);
+    if (calSel === null || list.indexOf(calSel) === -1) calSel = years;
     var pos = list.indexOf(calSel);
     var newer = pos > 0 ? list[pos - 1] : null;
     var older = pos < list.length - 1 ? list[pos + 1] : null;
@@ -265,11 +263,10 @@
     return progressCard(start, years) +
       (chips ? '<div class="filters calfilters" role="group" aria-label="Filter calendar by type">' + chips + "</div>" : "") +
       nav + tabs +
-      '<section class="ypanel ' + (calDir ? "from-" + calDir : "") + '" aria-label="Year ' + calSel + '"><div class="ybody"><div class="strip" aria-label="Entries per month, newest month first">' + strip + "</div>" + groups + "</div></section>" +
-      (list.length > 1 ? '<p class="keyhint">Use the ← and → keys to move between years.</p>' : "");
+      '<section class="ypanel ' + (calDir ? "from-" + calDir : "") + '" aria-label="Year ' + calSel + '"><div class="ybody"><div class="strip" aria-label="Entries per month, newest month first">' + strip + "</div>" + groups + "</div></section>";
   }
   function calendar() {
-    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The PhD read backwards, from Year 5 to Year 1. Move between years with the arrows. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>' +
+    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1></div><div id="cal-root"></div>' +
       '<section class="pdfsec" id="calpdf" hidden><h2>Calendar as a PDF</h2><div class="cv-actions"><a class="btn primary" id="calpdf-open" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" id="calpdf-dl" download>Download</a></div><div class="pdfbox"><div id="calpdf-pages" class="pdfpages"><p class="pdfmsg">Loading…</p></div></div></section>';
     renderCal();
     var file = (S.calendarPdf && S.calendarPdf.file) || "";
@@ -290,37 +287,14 @@
     var el = document.querySelector(focusKey); if (el && !el.disabled) el.focus();
   }
 
-  ({ home: home, cv: cv, publications: publications, calendar: calendar }[page] || home)();
+  /* ---------- teaching ---------- */
+  function teaching() {
+    app.innerHTML = '<div class="page-head"><h1 class="title">Teaching</h1></div><p class="empty">Teaching information will be added here.</p>';
+  }
+
+  ({ home: home, cv: cv, publications: publications, calendar: calendar, teaching: teaching }[page] || home)();
 
   /* ---------- interactions ---------- */
-  function copyText(text, btn) {
-    var label = btn.textContent;
-    function done(ok) {
-      var box = btn.parentNode.querySelector(".citebox");
-      if (ok) {
-        if (box) box.remove();
-        btn.textContent = "Copied";
-        setTimeout(function () { btn.textContent = label; }, 1400);
-      } else if (!box) {
-        var inp = document.createElement("input");
-        inp.className = "citebox"; inp.readOnly = true; inp.value = text;
-        btn.parentNode.appendChild(inp); inp.focus(); inp.select();
-      }
-    }
-    function fallback() {
-      try {
-        var ta = document.createElement("textarea");
-        ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
-        document.body.appendChild(ta); ta.select();
-        var ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        done(ok);
-      } catch (e) { done(false); }
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
-    } else { fallback(); }
-  }
   function isDark() {
     var t = document.documentElement.getAttribute("data-theme");
     return t ? t === "dark" : true;
@@ -346,10 +320,6 @@
       var next = isDark() ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       try { localStorage.setItem("portfolio-theme", next); } catch (e) {}
-    } else if (t.hasAttribute("data-copy")) {
-      copyText(t.getAttribute("data-copy"), t);
-    } else if (t.hasAttribute("data-cite")) {
-      copyText(cites[t.getAttribute("data-cite")] || "", t);
     } else if (t.hasAttribute("data-pf")) {
       pubFilter = t.getAttribute("data-pf"); renderPubs();
       var a = document.querySelector('[data-pf="' + pubFilter + '"]'); if (a) a.focus();
