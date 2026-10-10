@@ -182,9 +182,9 @@
   var calSel = null;      // selected year number (1 = first year); null = newest
   var calDir = "";        // direction of the last move, used for the slide-in
   function allEvents() {
-    var ev = (S.calendar || []).map(function (e) { return { date: e.date, type: TYPES[e.type] ? e.type : "other", title: e.title, note: e.note || "", planned: e.planned === true }; });
+    var ev = (S.calendar || []).map(function (e) { return { date: e.date, when: e.when || "", type: TYPES[e.type] ? e.type : "other", title: e.title, note: e.note || "", planned: e.planned === true }; });
     (S.publications || []).forEach(function (p) {
-      if (p.calendar !== false && p.date) ev.push({ date: p.date, type: "paper", title: p.title, note: p.venue + (p.status ? " · " + p.status : ""), planned: false });
+      if (p.calendar !== false && p.date) ev.push({ date: p.date, type: "paper", title: p.title, note: p.venue + (p.status ? " · " + p.status : ""), when: "", planned: false });
     });
     return ev;
   }
@@ -205,14 +205,10 @@
     var ys = start + (n - 1) * 12, ye = ys + 11;
     return { ys: ys, ye: ye, label: MONTHS[ys % 12] + " " + Math.floor(ys / 12) + " – " + MONTHS[ye % 12] + " " + Math.floor(ye / 12) };
   }
-  // Year numbers shown, newest first. A year shows once it has started or holds an entry.
-  function visibleYears(start, years, events) {
+  // All program years, newest first (Year 5 ... Year 1).
+  function visibleYears(start, years) {
     var out = [];
-    for (var n = years; n >= 1; n--) {
-      var r = yearRange(start, n);
-      var has = events.some(function (e) { var i = idx(e.date); return i >= r.ys && i <= r.ye; });
-      if (r.ys <= nowIdx || has) out.push(n);
-    }
+    for (var n = years; n >= 1; n--) out.push(n);
     return out;
   }
   function calInner() {
@@ -220,9 +216,9 @@
     if (!ph.start) return '<p class="empty">Set phd.start in content.js to build the calendar.</p>';
     var start = idx(ph.start), years = ph.years || 5;
     var events = allEvents();
-    var list = visibleYears(start, years, events);       // newest first
+    var list = visibleYears(start, years);              // newest first
     if (!list.length) return progressCard(start, years) + '<p class="empty">No years to show yet.</p>';
-    if (calSel === null || list.indexOf(calSel) === -1) calSel = list[0];
+    if (calSel === null || list.indexOf(calSel) === -1) calSel = clamp(Math.floor((nowIdx - start) / 12) + 1, 1, years);
     var pos = list.indexOf(calSel);
     var newer = pos > 0 ? list[pos - 1] : null;
     var older = pos < list.length - 1 ? list[pos + 1] : null;
@@ -247,15 +243,16 @@
     var groups = "", last = null;
     inYear.forEach(function (e) {
       var i = idx(e.date);
-      if (i !== last) {
+      var key = i + "|" + e.when;
+      if (key !== last) {
         if (last !== null) groups += "</ul></div>";
-        groups += '<div class="mgroup"><div class="mlabel">' + esc(MONTHS[i % 12] + " " + Math.floor(i / 12)) + '</div><ul class="evs">';
-        last = i;
+        groups += '<div class="mgroup"><div class="mlabel">' + esc(e.when || (MONTHS[i % 12] + " " + Math.floor(i / 12))) + '</div><ul class="evs">';
+        last = key;
       }
       groups += '<li class="ev"><span class="chip" data-type="' + e.type + '"><i></i>' + TYPES[e.type] + '</span><div><p class="ev-title">' + esc(e.title) + (e.planned ? '<span class="planned">Planned</span>' : "") + "</p>" + (e.note ? '<p class="ev-note">' + esc(e.note) + "</p>" : "") + "</div></li>";
     });
     if (last !== null) groups += "</ul></div>";
-    if (!inYear.length) groups = '<p class="empty">No entries for this year yet.</p>';
+    if (!inYear.length) groups = '<p class="empty">' + (r.ys > nowIdx ? "This year has not started yet." : "No entries for this year yet.") + "</p>";
 
     var nav = '<div class="yearnav">' +
       '<button class="btn" type="button" data-ynav="' + (newer || "") + '" aria-label="' + (newer ? "Newer year: Year " + newer : "No newer year") + '"' + (newer ? "" : " disabled") + '>← ' + (newer ? "Year " + newer : "Newer") + "</button>" +
@@ -272,7 +269,7 @@
       (list.length > 1 ? '<p class="keyhint">Use the ← and → keys to move between years.</p>' : "");
   }
   function calendar() {
-    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The program read backwards, from the current year to Year 1. Move between years with the arrows. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>' +
+    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The PhD read backwards, from Year 5 to Year 1. Move between years with the arrows. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>' +
       '<section class="pdfsec" id="calpdf" hidden><h2>Calendar as a PDF</h2><div class="cv-actions"><a class="btn primary" id="calpdf-open" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" id="calpdf-dl" download>Download</a></div><div class="pdfbox"><div id="calpdf-pages" class="pdfpages"><p class="pdfmsg">Loading…</p></div></div></section>';
     renderCal();
     var file = (S.calendarPdf && S.calendarPdf.file) || "";
@@ -286,7 +283,7 @@
   function calGo(n, focusKey) {
     var ph = S.phd || {};
     var start = idx(ph.start), years = ph.years || 5;
-    var list = visibleYears(start, years, allEvents());
+    var list = visibleYears(start, years);
     if (list.indexOf(n) === -1) return;
     calDir = n < calSel ? "older" : "newer";
     calSel = n; renderCal();

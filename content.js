@@ -49,7 +49,8 @@ window.SITE = {
     file: "calendar.pdf"
   },
 
-  // Takvimin başlangıç ayı. CV'de "Fall 2026" yazdığı için Ağustos 2026 alındı; gerçek ayla değiştirin.
+  // Doktora takvimi: Year 1 bu aydan başlar, her yıl 12 ay sürer, "years" kadar yıl gösterilir.
+  // CV'de "Fall 2026 - Expected 2031 June" yazdığı için Ağustos 2026 ve 5 yıl alındı.
   phd: {
     start: "2026-08",
     years: 5
@@ -93,10 +94,11 @@ window.SITE = {
   // type: "paper" | "talk" | "milestone" | "teaching" | "award" | "travel" | "other"
   // Örnek:
   // { date: "2026-10", type: "talk", title: "Başlık", note: "Not" },
+  // when: "Spring 2027" yazarsanız ay yerine bu etiket görünür (date yine yılın hangi dönemine düştüğünü belirler).
   // Gelecekte olacak ama henüz gerçekleşmemiş bir şey için  planned: true  ekleyin ("Planned" etiketi çıkar).
   calendar: [
-    { date: "2026-08", type: "milestone", title: "Started the dual PhD in Political Science & Social Data Analytics", note: "Penn State, Fall 2026" },
-    { date: "2026-08", type: "award", title: "University Graduate Fellowship", note: "Fall 2026" },
-    { date: "2027-01", type: "award", title: "Distinguished Graduate Fellowship", note: "Awarded for Spring 2027" }
+    { date: "2026-08", when: "Fall 2026", type: "milestone", title: "Started the dual PhD in Political Science & Social Data Analytics", note: "Penn State" },
+    { date: "2026-08", when: "Fall 2026", type: "award", title: "University Graduate Fellowship", note: "" },
+    { date: "2027-01", when: "Spring 2027", type: "award", title: "Distinguished Graduate Fellowship", note: "" }
   ]
 };
