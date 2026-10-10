@@ -20,8 +20,8 @@ window.SITE = {
     photo: "photo.jpg",
     initials: "OBY",
     bio: [
-      "I am a first-year PhD student in Political Science and Social Data Analytics at Penn State. I come from Sabancı University, where I completed my MA in Political Science. I also hold a double-major bachelor's degree in Political Science and Computer Science & Engineering.",
-      "My research interests include historical political economy, state capacity, and electoral behavior, with a particular focus on long-term institutional persistence."
+      "I am a first-year PhD student in Political Science and Social Data Analytics at Penn State. Before coming here, I completed an MA in Political Science at Sabancı University. I also studied Political Science and Computer Science & Engineering as an undergraduate.",
+      "I work on historical political economy, state capacity, and electoral behavior. I am especially interested in how institutions and big historical events keep shaping politics over time."
     ],
     interests: ["Historical political economy", "State capacity", "Electoral behavior", "Institutional persistence"],
     outside: [

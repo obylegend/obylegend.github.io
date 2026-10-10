@@ -127,7 +127,7 @@
   /* ---------- CV ---------- */
   function cv() {
     var file = (S.cv && S.cv.file) || "cv.pdf";
-    app.innerHTML = '<div class="page-head"><h1 class="title">Curriculum vitae</h1><p class="lede">Preview of the current CV. Use the buttons to open or save the PDF.</p></div>' +
+    app.innerHTML = '<div class="page-head"><h1 class="title">Curriculum vitae</h1><p class="lede">This is the current version of my CV. You can open or download it below.</p></div>' +
       '<div class="cv-actions"><a class="btn primary" href="' + esc(file) + '" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" href="' + esc(file) + '" download>Download</a></div>' +
       '<div class="pdfbox"><div id="pdfpages" class="pdfpages"><p class="pdfmsg">Loading the CV…</p></div></div>';
     var box = document.getElementById("pdfpages");
@@ -170,7 +170,7 @@
     return '<div class="filters" role="group" aria-label="Filter publications by type">' + chips + "</div>" + stats + list;
   }
   function publications() {
-    app.innerHTML = '<div class="page-head"><h1 class="title">Publications</h1><p class="lede">Working papers, theses, and published work, newest first.</p></div><div id="pubs-root"></div>';
+    app.innerHTML = '<div class="page-head"><h1 class="title">Publications</h1><p class="lede">My thesis, working papers, and other research. Newest first.</p></div><div id="pubs-root"></div>';
     renderPubs();
   }
   function renderPubs() { document.getElementById("pubs-root").innerHTML = pubsInner(); }
@@ -289,7 +289,7 @@
 
   /* ---------- teaching ---------- */
   function teaching() {
-    app.innerHTML = '<div class="page-head"><h1 class="title">Teaching</h1></div><p class="empty">Teaching information will be added here.</p>';
+    app.innerHTML = '<div class="page-head"><h1 class="title">Teaching</h1></div><p class="empty">I will add teaching information here as I gain more experience.</p>';
   }
 
   ({ home: home, cv: cv, publications: publications, calendar: calendar, teaching: teaching }[page] || home)();
