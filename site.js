@@ -4,7 +4,7 @@
   var app = document.getElementById("app");
   var page = document.body.getAttribute("data-page");
   if (!S || !S.person) {
-    app.innerHTML = '<div class="wrap page"><p>content.js did not load. Keep it in the same folder as the HTML files.</p></div>';
+    app.innerHTML = '<p>content.js did not load. Keep it in the same folder as the HTML files.</p>';
     return;
   }
   var P = S.person;
@@ -34,42 +34,51 @@
   var up = document.getElementById("updated");
   if (up) up.textContent = S.updated ? "Last updated " + S.updated : "";
 
-  /* ---------- home ---------- */
-  function home() {
+  /* ---------- sidebar (all pages) ---------- */
+  function sidebar() {
+    var el = document.getElementById("sidebar");
+    if (!el) return;
     var links = (P.links || []).map(function (l) {
       var u = safeUrl(l.url);
-      return u ? '<a class="btn" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label) + "</a>" : "";
+      return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label) + "</a>" : "";
     }).join("");
-    var bio = (P.bio || []).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("");
-    var notes = (P.outside || []).map(function (o) {
-      return '<div><p class="about-label">' + esc(o.label) + "</p><p>" + esc(o.text) + "</p></div>";
-    }).join("");
-    app.innerHTML = '<div class="wrap page"><div class="hero"><div>' +
-      '<p class="eyebrow">' + esc(P.title) + (P.institution ? " · " + esc(P.institution) : "") + "</p>" +
-      "<h1>" + esc(P.name) + "</h1>" +
-      '<div class="bio">' + bio + "</div>" +
-      ((P.interests || []).length ? '<ul class="interests" aria-label="Research interests">' + P.interests.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") +
-      (links ? '<div class="links">' + links + "</div>" : "") +
-      (P.email ? '<div class="contact"><span class="addr">' + esc(P.email) + '</span><button class="btn" type="button" data-copy="' + esc(P.email) + '">Copy email</button></div>' : "") +
-      '</div><div class="side"><div id="portrait"></div>' + (notes ? '<div class="sidenotes">' + notes + "</div>" : "") + "</div></div></div>";
-    var holder = document.getElementById("portrait");
+    var mail = P.email ? '<span class="sb-email">' + esc(P.email) + "</span>" : "";
+    el.innerHTML = '<div class="avatar-wrap" id="avatar"></div>' +
+      '<p class="sb-name">' + esc(P.name) + "</p>" +
+      '<p class="sb-title">' + esc(P.title) + "</p>" +
+      '<p class="sb-place">' + esc([P.institution, P.location].filter(Boolean).join(", ")) + "</p>" +
+      (links || mail ? '<div class="sb-links"><p class="sb-label">Links</p>' + links + mail + "</div>" : "");
+    var holder = document.getElementById("avatar");
     function mono() { holder.innerHTML = '<div class="monogram" aria-hidden="true">' + esc(P.initials || "") + "</div>"; }
     if (P.photo) {
       var img = new Image();
-      img.className = "portrait";
+      img.className = "avatar";
       img.alt = "Portrait of " + P.name;
       img.onload = function () { holder.innerHTML = ""; holder.appendChild(img); };
       img.onerror = mono;
       img.src = P.photo;
     } else { mono(); }
   }
+  sidebar();
+
+  /* ---------- home ---------- */
+  function home() {
+    var bio = (P.bio || []).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("");
+    var notes = (P.outside || []).map(function (o) {
+      return '<div><p class="about-label">' + esc(o.label) + "</p><p>" + esc(o.text) + "</p></div>";
+    }).join("");
+    app.innerHTML = '<div class="page-head"><h1 class="title">About</h1></div>' +
+      '<div class="bio">' + bio + "</div>" +
+      ((P.interests || []).length ? '<ul class="interests" aria-label="Research interests">' + P.interests.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") +
+      (notes ? '<div class="sidenotes">' + notes + "</div>" : "");
+  }
 
   /* ---------- CV (PDF preview) ---------- */
   function cv() {
     var file = (S.cv && S.cv.file) || "cv.pdf";
-    app.innerHTML = '<div class="wrap page"><div class="page-head"><h2>Curriculum vitae</h2><p class="lede">Preview of the current CV. Use the buttons to open or save the PDF.</p></div>' +
+    app.innerHTML = '<div class="page-head"><h1 class="title">Curriculum vitae</h1><p class="lede">Preview of the current CV. Use the buttons to open or save the PDF.</p></div>' +
       '<div class="cv-actions"><a class="btn primary" href="' + esc(file) + '" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" href="' + esc(file) + '" download>Download</a></div>' +
-      '<div class="pdfbox"><div id="pdfpages" class="pdfpages"><p class="pdfmsg">Loading the CV…</p></div></div></div>';
+      '<div class="pdfbox"><div id="pdfpages" class="pdfpages"><p class="pdfmsg">Loading the CV…</p></div></div>';
     var box = document.getElementById("pdfpages");
     function fail(msg) { box.innerHTML = '<p class="pdfmsg">' + msg + "</p>"; }
     if (!window.pdfjsLib) { fail("The PDF viewer did not load. Use Open PDF instead."); return; }
@@ -156,7 +165,7 @@
     return '<div class="filters" role="group" aria-label="Filter publications by type">' + chips + "</div>" + stats + list;
   }
   function publications() {
-    app.innerHTML = '<div class="wrap page"><div class="page-head"><h2>Publications</h2><p class="lede">Working papers, theses, and published work, newest first.</p></div><div id="pubs-root"></div></div>';
+    app.innerHTML = '<div class="page-head"><h1 class="title">Publications</h1><p class="lede">Working papers, theses, and published work, newest first.</p></div><div id="pubs-root"></div>';
     renderPubs();
   }
   function renderPubs() { document.getElementById("pubs-root").innerHTML = pubsInner(); }
@@ -223,7 +232,7 @@
     return progressCard(start, years) + (chips ? '<div class="filters calfilters" role="group" aria-label="Filter calendar by type">' + chips + "</div>" : "") + '<div class="years">' + out + "</div>";
   }
   function calendar() {
-    app.innerHTML = '<div class="wrap page"><div class="page-head"><h2>Calendar</h2><p class="lede">The program read backwards, from the current year to Year 1. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div></div>';
+    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The program read backwards, from the current year to Year 1. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>';
     renderCal();
   }
   function renderCal() { document.getElementById("cal-root").innerHTML = calInner(); }
@@ -261,7 +270,7 @@
   }
   function isDark() {
     var t = document.documentElement.getAttribute("data-theme");
-    return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return t ? t === "dark" : true;
   }
   try {
     var saved = localStorage.getItem("portfolio-theme");
