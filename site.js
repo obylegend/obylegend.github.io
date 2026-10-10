@@ -297,7 +297,7 @@
   /* ---------- interactions ---------- */
   function isDark() {
     var t = document.documentElement.getAttribute("data-theme");
-    return t ? t === "dark" : true;
+    return t ? t === "dark" : false;
   }
   try {
     var saved = localStorage.getItem("portfolio-theme");
