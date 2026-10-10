@@ -66,6 +66,7 @@ window.SITE = {
       date: "2026-04",
       type: "thesis",
       status: "Supervisors: Fatih Serkant Adıgüzel and Mert Moral",
+      pdf: "OsmanBerkeYıldırım_Thesis_v14.pdf",
       abstract: "Builds a neighborhood-level dataset of 51,297 Turkish settlements that combines historical population-exchange exposure with agricultural production, geographic, and electoral data. Uses entropy balancing, coarsened exact matching, and difference-in-differences to estimate long-run effects of the 1923 Lausanne Population Exchange, and causal mediation analysis to test whether agricultural production accounts for the political legacy. Finds persistent differences in agricultural production, opposition support, incumbent support, and turnout between historically exchange-exposed and comparable non-exposed settlements.",
       calendar: false
     },
@@ -75,7 +76,8 @@ window.SITE = {
       venue: "Working paper, Sabancı University",
       date: "2025-04",
       type: "working",
-      status: "Draft available upon request",
+      status: "Writing sample",
+      pdf: "Osman_Berke_Yıldırım_WritingSample.pdf",
       abstract: "Investigates whether the 1832 Ottoman–Greek border generated persistent economic disparities across adjacent municipalities. Applies OLS and geographic regression discontinuity models to municipal-level GDP and night-light data, with geographic and infrastructural controls, and identifies slope-based discontinuities suggesting modest positive long-run development patterns on the former Ottoman side.",
       calendar: false
     },
