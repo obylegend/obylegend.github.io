@@ -73,15 +73,10 @@
       (notes ? '<div class="sidenotes">' + notes + "</div>" : "");
   }
 
-  /* ---------- CV (PDF preview) ---------- */
-  function cv() {
-    var file = (S.cv && S.cv.file) || "cv.pdf";
-    app.innerHTML = '<div class="page-head"><h1 class="title">Curriculum vitae</h1><p class="lede">Preview of the current CV. Use the buttons to open or save the PDF.</p></div>' +
-      '<div class="cv-actions"><a class="btn primary" href="' + esc(file) + '" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" href="' + esc(file) + '" download>Download</a></div>' +
-      '<div class="pdfbox"><div id="pdfpages" class="pdfpages"><p class="pdfmsg">Loading the CV…</p></div></div>';
-    var box = document.getElementById("pdfpages");
-    function fail(msg) { box.innerHTML = '<p class="pdfmsg">' + msg + "</p>"; }
-    if (!window.pdfjsLib) { fail("The PDF viewer did not load. Use Open PDF instead."); return; }
+  /* ---------- PDF preview (shared by CV and calendar) ---------- */
+  function pdfViewer(box, file, hooks) {
+    hooks = hooks || {};
+    if (!window.pdfjsLib) { if (hooks.onFail) hooks.onFail(); return; }
     pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
     var doc = null, token = 0;
     function draw() {
@@ -103,7 +98,7 @@
               c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
               c.style.width = Math.floor(vp.width / ratio) + "px";
               c.setAttribute("role", "img");
-              c.setAttribute("aria-label", "CV page " + num + " of " + doc.numPages);
+              c.setAttribute("aria-label", "Page " + num + " of " + doc.numPages);
               return pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () { frag.appendChild(c); });
             });
           });
@@ -115,7 +110,9 @@
       });
     }
     pdfjsLib.getDocument(file).promise.then(function (d) {
-      doc = d; draw();
+      doc = d;
+      if (hooks.onReady) hooks.onReady();
+      draw();
       var t, lastW = box.parentNode.clientWidth;
       window.addEventListener("resize", function () {
         clearTimeout(t);
@@ -124,9 +121,19 @@
           if (Math.abs(w - lastW) > 8) { lastW = w; draw(); }
         }, 250);
       });
-    }, function () {
-      fail("The CV file (" + esc(file) + ") has not been added yet.");
-    });
+    }, function () { if (hooks.onFail) hooks.onFail(); });
+  }
+
+  /* ---------- CV ---------- */
+  function cv() {
+    var file = (S.cv && S.cv.file) || "cv.pdf";
+    app.innerHTML = '<div class="page-head"><h1 class="title">Curriculum vitae</h1><p class="lede">Preview of the current CV. Use the buttons to open or save the PDF.</p></div>' +
+      '<div class="cv-actions"><a class="btn primary" href="' + esc(file) + '" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" href="' + esc(file) + '" download>Download</a></div>' +
+      '<div class="pdfbox"><div id="pdfpages" class="pdfpages"><p class="pdfmsg">Loading the CV…</p></div></div>';
+    var box = document.getElementById("pdfpages");
+    pdfViewer(box, file, { onFail: function () {
+      box.innerHTML = '<p class="pdfmsg">The CV file (' + esc(file) + ') has not been added yet. Use Open PDF to try the file directly.</p>';
+    } });
   }
 
   /* ---------- publications ---------- */
@@ -172,10 +179,12 @@
 
   /* ---------- retrospective calendar ---------- */
   var calOff = {};
+  var calSel = null;      // selected year number (1 = first year); null = newest
+  var calDir = "";        // direction of the last move, used for the slide-in
   function allEvents() {
-    var ev = (S.calendar || []).map(function (e) { return { date: e.date, type: TYPES[e.type] ? e.type : "other", title: e.title, note: e.note || "" }; });
+    var ev = (S.calendar || []).map(function (e) { return { date: e.date, type: TYPES[e.type] ? e.type : "other", title: e.title, note: e.note || "", planned: e.planned === true }; });
     (S.publications || []).forEach(function (p) {
-      if (p.calendar !== false && p.date) ev.push({ date: p.date, type: "paper", title: p.title, note: p.venue + (p.status ? " · " + p.status : "") });
+      if (p.calendar !== false && p.date) ev.push({ date: p.date, type: "paper", title: p.title, note: p.venue + (p.status ? " · " + p.status : ""), planned: false });
     });
     return ev;
   }
@@ -192,50 +201,97 @@
     var line = nowIdx < start ? "Starts " + fmt(S.phd.start) : "Year " + curYear + " of " + years + ", month " + monthIn;
     return '<aside class="card progress" aria-label="Program progress"><h3>Program progress</h3><div class="pbar" style="--n:' + years + '">' + segs + '</div><p class="pnow">' + esc(line) + "</p></aside>";
   }
+  function yearRange(start, n) {
+    var ys = start + (n - 1) * 12, ye = ys + 11;
+    return { ys: ys, ye: ye, label: MONTHS[ys % 12] + " " + Math.floor(ys / 12) + " – " + MONTHS[ye % 12] + " " + Math.floor(ye / 12) };
+  }
+  // Year numbers shown, newest first. A year shows once it has started or holds an entry.
+  function visibleYears(start, years, events) {
+    var out = [];
+    for (var n = years; n >= 1; n--) {
+      var r = yearRange(start, n);
+      var has = events.some(function (e) { var i = idx(e.date); return i >= r.ys && i <= r.ye; });
+      if (r.ys <= nowIdx || has) out.push(n);
+    }
+    return out;
+  }
   function calInner() {
     var ph = S.phd || {};
     if (!ph.start) return '<p class="empty">Set phd.start in content.js to build the calendar.</p>';
     var start = idx(ph.start), years = ph.years || 5;
     var events = allEvents();
+    var list = visibleYears(start, years, events);       // newest first
+    if (!list.length) return progressCard(start, years) + '<p class="empty">No years to show yet.</p>';
+    if (calSel === null || list.indexOf(calSel) === -1) calSel = list[0];
+    var pos = list.indexOf(calSel);
+    var newer = pos > 0 ? list[pos - 1] : null;
+    var older = pos < list.length - 1 ? list[pos + 1] : null;
+
     var present = {};
     events.forEach(function (e) { present[e.type] = true; });
     var chips = Object.keys(TYPES).filter(function (t) { return present[t]; }).map(function (t) {
       return '<button class="btn" type="button" data-cf="' + t + '" aria-pressed="' + (!calOff[t]) + '"><span class="chip" data-type="' + t + '" style="padding:0"><i></i>' + TYPES[t] + "</span></button>";
     }).join("");
-    var visible = events.filter(function (e) { return !calOff[e.type]; });
-    var out = "";
-    for (var n = years; n >= 1; n--) {
-      var ys = start + (n - 1) * 12, ye = ys + 11;
-      if (ys > nowIdx) continue;
-      var inYear = visible.filter(function (e) { var i = idx(e.date); return i >= ys && i <= ye; }).sort(function (a, b) { return idx(b.date) - idx(a.date); });
-      var perMonth = {}, max = 0;
-      inYear.forEach(function (e) { var i = idx(e.date); perMonth[i] = (perMonth[i] || 0) + 1; max = Math.max(max, perMonth[i]); });
-      var strip = "";
-      for (var k = 11; k >= 0; k--) {
-        var mi = ys + k, c = perMonth[mi] || 0, mo = mi % 12;
-        strip += '<div class="mcell' + (c ? " has" : "") + (mi === nowIdx ? " now" : "") + '" title="' + MONTHS[mo] + " " + Math.floor(mi / 12) + ": " + c + (c === 1 ? " entry" : " entries") + '"><span class="bar" style="--h:' + (c ? Math.max(14, (c / max) * 100).toFixed(0) : 0) + '%"></span><span class="ml">' + MONTHS[mo] + "</span></div>";
-      }
-      var groups = "", last = null;
-      inYear.forEach(function (e) {
-        var i = idx(e.date);
-        if (i !== last) {
-          if (last !== null) groups += "</ul></div>";
-          groups += '<div class="mgroup"><div class="mlabel">' + esc(MONTHS[i % 12] + " " + Math.floor(i / 12)) + '</div><ul class="evs">';
-          last = i;
-        }
-        groups += '<li class="ev"><span class="chip" data-type="' + e.type + '"><i></i>' + TYPES[e.type] + '</span><div><p class="ev-title">' + esc(e.title) + (i > nowIdx ? '<span class="planned">Planned</span>' : "") + "</p>" + (e.note ? '<p class="ev-note">' + esc(e.note) + "</p>" : "") + "</div></li>";
-      });
-      if (last !== null) groups += "</ul></div>";
-      if (!inYear.length) groups = '<p class="empty">No entries for this year yet.</p>';
-      out += '<details class="year" open><summary><span class="yname">Year ' + n + '</span><span class="yrange">' + esc(MONTHS[ys % 12] + " " + Math.floor(ys / 12)) + " – " + esc(MONTHS[ye % 12] + " " + Math.floor(ye / 12)) + '</span><span class="ycount">' + inYear.length + (inYear.length === 1 ? " entry" : " entries") + '</span></summary><div class="ybody"><div class="strip" aria-label="Entries per month, newest month first">' + strip + "</div>" + groups + "</div></details>";
+
+    var r = yearRange(start, calSel);
+    var inYear = events.filter(function (e) { return !calOff[e.type]; })
+      .filter(function (e) { var i = idx(e.date); return i >= r.ys && i <= r.ye; })
+      .sort(function (a, b) { return idx(b.date) - idx(a.date); });
+    var perMonth = {}, max = 0;
+    inYear.forEach(function (e) { var i = idx(e.date); perMonth[i] = (perMonth[i] || 0) + 1; max = Math.max(max, perMonth[i]); });
+    var strip = "";
+    for (var k = 11; k >= 0; k--) {
+      var mi = r.ys + k, c = perMonth[mi] || 0, mo = mi % 12;
+      strip += '<div class="mcell' + (c ? " has" : "") + (mi === nowIdx ? " now" : "") + '" title="' + MONTHS[mo] + " " + Math.floor(mi / 12) + ": " + c + (c === 1 ? " entry" : " entries") + '"><span class="bar" style="--h:' + (c ? Math.max(14, (c / max) * 100).toFixed(0) : 0) + '%"></span><span class="ml">' + MONTHS[mo] + "</span></div>";
     }
-    return progressCard(start, years) + (chips ? '<div class="filters calfilters" role="group" aria-label="Filter calendar by type">' + chips + "</div>" : "") + '<div class="years">' + out + "</div>";
+    var groups = "", last = null;
+    inYear.forEach(function (e) {
+      var i = idx(e.date);
+      if (i !== last) {
+        if (last !== null) groups += "</ul></div>";
+        groups += '<div class="mgroup"><div class="mlabel">' + esc(MONTHS[i % 12] + " " + Math.floor(i / 12)) + '</div><ul class="evs">';
+        last = i;
+      }
+      groups += '<li class="ev"><span class="chip" data-type="' + e.type + '"><i></i>' + TYPES[e.type] + '</span><div><p class="ev-title">' + esc(e.title) + (e.planned ? '<span class="planned">Planned</span>' : "") + "</p>" + (e.note ? '<p class="ev-note">' + esc(e.note) + "</p>" : "") + "</div></li>";
+    });
+    if (last !== null) groups += "</ul></div>";
+    if (!inYear.length) groups = '<p class="empty">No entries for this year yet.</p>';
+
+    var nav = '<div class="yearnav">' +
+      '<button class="btn" type="button" data-ynav="' + (newer || "") + '" aria-label="' + (newer ? "Newer year: Year " + newer : "No newer year") + '"' + (newer ? "" : " disabled") + '>← ' + (newer ? "Year " + newer : "Newer") + "</button>" +
+      '<div class="ycur" aria-live="polite"><span class="yname">Year ' + calSel + '</span><span class="yrange">' + esc(r.label) + '</span><span class="ycount">' + inYear.length + (inYear.length === 1 ? " entry" : " entries") + "</span></div>" +
+      '<button class="btn" type="button" data-ynav="' + (older || "") + '" aria-label="' + (older ? "Older year: Year " + older : "No older year") + '"' + (older ? "" : " disabled") + '>' + (older ? "Year " + older : "Older") + " →</button></div>";
+    var tabs = list.length > 1 ? '<div class="ytabs" role="group" aria-label="Jump to a year">' + list.map(function (n) {
+      return '<button class="btn" type="button" data-ynav="' + n + '" aria-pressed="' + (n === calSel) + '">Y' + n + "</button>";
+    }).join("") + "</div>" : "";
+
+    return progressCard(start, years) +
+      (chips ? '<div class="filters calfilters" role="group" aria-label="Filter calendar by type">' + chips + "</div>" : "") +
+      nav + tabs +
+      '<section class="ypanel ' + (calDir ? "from-" + calDir : "") + '" aria-label="Year ' + calSel + '"><div class="ybody"><div class="strip" aria-label="Entries per month, newest month first">' + strip + "</div>" + groups + "</div></section>" +
+      (list.length > 1 ? '<p class="keyhint">Use the ← and → keys to move between years.</p>' : "");
   }
   function calendar() {
-    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The program read backwards, from the current year to Year 1. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>';
+    app.innerHTML = '<div class="page-head"><h1 class="title">Calendar</h1><p class="lede">The program read backwards, from the current year to Year 1. Move between years with the arrows. Bars show how many entries each month holds, newest month first.</p></div><div id="cal-root"></div>' +
+      '<section class="pdfsec" id="calpdf" hidden><h2>Calendar as a PDF</h2><div class="cv-actions"><a class="btn primary" id="calpdf-open" target="_blank" rel="noopener noreferrer">Open PDF</a><a class="btn" id="calpdf-dl" download>Download</a></div><div class="pdfbox"><div id="calpdf-pages" class="pdfpages"><p class="pdfmsg">Loading…</p></div></div></section>';
     renderCal();
+    var file = (S.calendarPdf && S.calendarPdf.file) || "";
+    if (!file) return;
+    var sec = document.getElementById("calpdf");
+    document.getElementById("calpdf-open").setAttribute("href", file);
+    document.getElementById("calpdf-dl").setAttribute("href", file);
+    pdfViewer(document.getElementById("calpdf-pages"), file, { onReady: function () { sec.hidden = false; } });
   }
   function renderCal() { document.getElementById("cal-root").innerHTML = calInner(); }
+  function calGo(n, focusKey) {
+    var ph = S.phd || {};
+    var start = idx(ph.start), years = ph.years || 5;
+    var list = visibleYears(start, years, allEvents());
+    if (list.indexOf(n) === -1) return;
+    calDir = n < calSel ? "older" : "newer";
+    calSel = n; renderCal();
+    var el = document.querySelector(focusKey); if (el && !el.disabled) el.focus();
+  }
 
   ({ home: home, cv: cv, publications: publications, calendar: calendar }[page] || home)();
 
@@ -277,6 +333,15 @@
     if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
   } catch (e) {}
 
+  document.addEventListener("keydown", function (ev) {
+    if (page !== "calendar") return;
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+    var tag = ev.target && ev.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    var btn = document.querySelector('.yearnav > button[data-ynav]' + (ev.key === "ArrowLeft" ? ":first-child" : ":last-child"));
+    if (btn && !btn.disabled && btn.getAttribute("data-ynav")) { ev.preventDefault(); btn.click(); }
+  });
+
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest("button");
     if (!t) return;
@@ -291,6 +356,14 @@
     } else if (t.hasAttribute("data-pf")) {
       pubFilter = t.getAttribute("data-pf"); renderPubs();
       var a = document.querySelector('[data-pf="' + pubFilter + '"]'); if (a) a.focus();
+    } else if (t.hasAttribute("data-ynav")) {
+      var yn = Number(t.getAttribute("data-ynav"));
+      if (yn) {
+        var wasTab = t.closest(".ytabs");
+        var before = calSel;
+        var dirNewer = yn > before;
+        calGo(yn, wasTab ? '.ytabs [data-ynav="' + yn + '"]' : (dirNewer ? '.yearnav [data-ynav]:first-child' : '.yearnav > button:last-child'));
+      }
     } else if (t.hasAttribute("data-cf")) {
       var k = t.getAttribute("data-cf"); calOff[k] = !calOff[k]; renderCal();
       var b = document.querySelector('[data-cf="' + k + '"]'); if (b) b.focus();

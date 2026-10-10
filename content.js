@@ -20,13 +20,13 @@ window.SITE = {
     photo: "photo.jpg",
     initials: "OBY",
     bio: [
-      "Osman Berke Yıldırım is a first-year graduate student in Political Science at Penn State. He comes from Sabancı University, where he completed his MA in Political Science. He also holds a bachelor's degree in Political Science and Computer Science & Engineering.",
-      "His research interests include historical political economy, state capacity, and electoral behavior, with a particular focus on long-term institutional persistence."
+      "I am a first-year PhD student in Political Science and Social Data Analytics at Penn State. I come from Sabancı University, where I completed my MA in Political Science. I also hold a double-major bachelor's degree in Political Science and Computer Science & Engineering.",
+      "My research interests include historical political economy, state capacity, and electoral behavior, with a particular focus on long-term institutional persistence."
     ],
     interests: ["Historical political economy", "State capacity", "Electoral behavior", "Institutional persistence"],
     outside: [
-      { label: "Outside research", text: "Playing basketball and trying new foods." },
-      { label: "Fun fact", text: "He was the MC for all major events at his high school." }
+      { label: "Outside research", text: "I enjoy playing basketball and trying new foods." },
+      { label: "Fun fact", text: "I was the MC for all major events at my high school." }
     ],
     // Url'si boş olan bağlantılar gösterilmez. Google Scholar, ORCID ve LinkedIn adreslerinizi ekleyin.
     links: [
@@ -41,6 +41,12 @@ window.SITE = {
 
   cv: {
     file: "cv.pdf"
+  },
+
+  // Takvimin PDF hali. calendar.pdf dosyasını bu klasöre koyarsanız Calendar sayfasında görünür.
+  // Dosya yoksa bu bölüm hiç gösterilmez.
+  calendarPdf: {
+    file: "calendar.pdf"
   },
 
   // Takvimin başlangıç ayı. CV'de "Fall 2026" yazdığı için Ağustos 2026 alındı; gerçek ayla değiştirin.
@@ -87,9 +93,10 @@ window.SITE = {
   // type: "paper" | "talk" | "milestone" | "teaching" | "award" | "travel" | "other"
   // Örnek:
   // { date: "2026-10", type: "talk", title: "Başlık", note: "Not" },
+  // Gelecekte olacak ama henüz gerçekleşmemiş bir şey için  planned: true  ekleyin ("Planned" etiketi çıkar).
   calendar: [
     { date: "2026-08", type: "milestone", title: "Started the dual PhD in Political Science & Social Data Analytics", note: "Penn State, Fall 2026" },
     { date: "2026-08", type: "award", title: "University Graduate Fellowship", note: "Fall 2026" },
-    { date: "2027-01", type: "award", title: "Distinguished Graduate Fellowship", note: "Spring 2027" }
+    { date: "2027-01", type: "award", title: "Distinguished Graduate Fellowship", note: "Awarded for Spring 2027" }
   ]
 };
