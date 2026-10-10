@@ -12,7 +12,7 @@ window.SITE = {
 
   person: {
     name: "Osman Berke Yıldırım",
-    title: "Graduate Student, Department of Political Science",
+    title: "PhD Student, Political Science & Social Data Analytics",
     institution: "Penn State",
     // E-posta herkese açık sayfada görüneceği için boş bırakıldı. İstediğiniz adresi yazabilirsiniz.
     email: "",
@@ -43,18 +43,53 @@ window.SITE = {
     file: "cv.pdf"
   },
 
-  // Takvimin sayıldığı başlangıç ayı. Gerçek başlangıç ayınızla değiştirin.
+  // Takvimin başlangıç ayı. CV'de "Fall 2026" yazdığı için Ağustos 2026 alındı; gerçek ayla değiştirin.
   phd: {
     start: "2026-08",
     years: 5
   },
 
-  // type: "journal" | "conference" | "preprint" | "review" | "thesis" | "other"
+  // type: "journal" | "conference" | "preprint" | "working" | "review" | "thesis" | "other"
   // Tarihi olan her yayın takvimde de görünür. Takvimde istemezseniz  calendar: false  ekleyin.
-  publications: [],
+  publications: [
+    {
+      title: "Once We Were Brothers: Forced Migration, Agricultural Mismatch, and Electoral Behavior; Evidence from the 1923 Lausanne Population Exchange",
+      authors: ["Osman Berke Yıldırım"],
+      venue: "MA thesis, Sabancı University",
+      date: "2026-04",
+      type: "thesis",
+      status: "Supervisors: Fatih Serkant Adıgüzel and Mert Moral",
+      abstract: "Builds a neighborhood-level dataset of 51,297 Turkish settlements that combines historical population-exchange exposure with agricultural production, geographic, and electoral data. Uses entropy balancing, coarsened exact matching, and difference-in-differences to estimate long-run effects of the 1923 Lausanne Population Exchange, and causal mediation analysis to test whether agricultural production accounts for the political legacy. Finds persistent differences in agricultural production, opposition support, incumbent support, and turnout between historically exchange-exposed and comparable non-exposed settlements.",
+      calendar: false
+    },
+    {
+      title: "Administrative Continuity and State Capacity: Quasi-Natural Experiment Example from the Ottoman-Greek Divide",
+      authors: ["Osman Berke Yıldırım"],
+      venue: "Working paper, Sabancı University",
+      date: "2025-04",
+      type: "working",
+      status: "Draft available upon request",
+      abstract: "Investigates whether the 1832 Ottoman–Greek border generated persistent economic disparities across adjacent municipalities. Applies OLS and geographic regression discontinuity models to municipal-level GDP and night-light data, with geographic and infrastructural controls, and identifies slope-based discontinuities suggesting modest positive long-run development patterns on the former Ottoman side.",
+      calendar: false
+    },
+    {
+      title: "Foreign Occupation, Local Resistance, and State Capacity: A Subnational Analysis",
+      authors: ["Osman Berke Yıldırım"],
+      venue: "Working paper",
+      date: "2024-04",
+      type: "working",
+      status: "Supervisor: Adee Weller",
+      abstract: "Constructs a geocoded dataset for Turkish districts to study how the Turkish War of Independence shaped fiscal and legal state capacity.",
+      calendar: false
+    }
+  ],
 
   // type: "paper" | "talk" | "milestone" | "teaching" | "award" | "travel" | "other"
   // Örnek:
   // { date: "2026-10", type: "talk", title: "Başlık", note: "Not" },
-  calendar: []
+  calendar: [
+    { date: "2026-08", type: "milestone", title: "Started the dual PhD in Political Science & Social Data Analytics", note: "Penn State, Fall 2026" },
+    { date: "2026-08", type: "award", title: "University Graduate Fellowship", note: "Fall 2026" },
+    { date: "2027-01", type: "award", title: "Distinguished Graduate Fellowship", note: "Spring 2027" }
+  ]
 };

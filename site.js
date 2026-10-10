@@ -25,7 +25,7 @@
   var nowIdx = now.getFullYear() * 12 + now.getMonth();
 
   var TYPES = { paper: "Paper", talk: "Talk", milestone: "Milestone", teaching: "Teaching", award: "Award", travel: "Travel", other: "Other" };
-  var PUB_TYPES = { journal: "Journal", conference: "Conference", preprint: "Preprint", review: "Under review", thesis: "Thesis", other: "Other" };
+  var PUB_TYPES = { journal: "Journal", conference: "Conference", preprint: "Preprint", working: "Working paper", review: "Under review", thesis: "Thesis", other: "Other" };
 
   var titles = { home: "", cv: "CV · ", publications: "Publications · ", calendar: "Calendar · " };
   document.title = (titles[page] || "") + P.name;
@@ -156,7 +156,7 @@
     return '<div class="filters" role="group" aria-label="Filter publications by type">' + chips + "</div>" + stats + list;
   }
   function publications() {
-    app.innerHTML = '<div class="wrap page"><div class="page-head"><h2>Publications</h2><p class="lede">Papers, preprints, and manuscripts under review, newest first.</p></div><div id="pubs-root"></div></div>';
+    app.innerHTML = '<div class="wrap page"><div class="page-head"><h2>Publications</h2><p class="lede">Working papers, theses, and published work, newest first.</p></div><div id="pubs-root"></div></div>';
     renderPubs();
   }
   function renderPubs() { document.getElementById("pubs-root").innerHTML = pubsInner(); }
